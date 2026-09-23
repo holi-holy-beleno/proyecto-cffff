@@ -4,16 +4,13 @@ require('dotenv').config();
 
 const app = express();
 
-// Configuración explícita y permisiva de CORS
+// Configuración de CORS
 app.use(cors({
-  origin: true, // Permite dinámicamente cualquier origen reflejando la petición (incluye Vercel y Render)
+  origin: true, // Permite cualquier origen reflejando la petición
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
-
-// Responder explícitamente a solicitudes preflight (OPTIONS)
-app.options('*', cors());
 
 app.use(express.json());
 
@@ -22,16 +19,12 @@ const clientesRoutes = require('./routes/clientes');
 const productosRoutes = require('./routes/productos');
 const ventasRoutes = require('./routes/ventas');
 
-// Definir rutas de API
+// Usar prefijo estándar /api
 app.use('/api/clientes', clientesRoutes);
 app.use('/api/productos', productosRoutes);
 app.use('/api/ventas', ventasRoutes);
 
-app.use('/clientes', clientesRoutes);
-app.use('/productos', productosRoutes);
-app.use('/ventas', ventasRoutes);
-
-// Ruta de health check
+// Health check
 app.get('/', (req, res) => {
   res.json({ status: 'OK', message: 'API Backend en funcionamiento' });
 });
