@@ -1,6 +1,7 @@
-const express = require('express');
+import express from 'express';
+import db from '../config/db.js'; // Extensión .js obligatoria en ES Modules
+
 const router = express.Router();
-const db = require('../config/db');
 
 // 1. CONSULTAR VENTAS (GET)
 router.get('/', async (req, res) => {
@@ -56,7 +57,7 @@ router.post('/', async (req, res) => {
           [idVentaCreada, item.id_producto, item.cantidad, item.precio_unitario]
         );
 
-        // Opcional: Descontar stock del producto
+        // Descontar stock del producto
         await connection.query(
           'UPDATE productos SET stock = stock - ? WHERE id_producto = ?',
           [item.cantidad, item.id_producto]
@@ -104,5 +105,4 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-module.exports = router;
 export default router;
