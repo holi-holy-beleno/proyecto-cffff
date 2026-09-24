@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
 import Table from 'react-bootstrap/Table';
+import Alert from 'react-bootstrap/Alert';
 
 function Productos() {
   const [productos, setProductos] = useState([]);
@@ -10,22 +11,32 @@ function Productos() {
   useEffect(() => {
     api.get('/productos')
       .then(response => {
-        setProductos(response.data);
+        const data = response.data;
+        if (Array.isArray(data)) {
+          setProductos(data);
+        } else if (data && Array.isArray(data.productos)) {
+          setProductos(data.productos);
+        } else {
+          setProductos([]);
+        }
         setCargando(false);
       })
       .catch(err => {
-        setError('No se pudo cargar la lista de productos');
+        console.error('Error al cargar productos:', err);
+        setError('No se pudo cargar la lista de productos desde la API.');
         setCargando(false);
       });
   }, []);
 
-  if (cargando) return <p className="container mt-3">Cargando productos...</p>;
-  if (error) return <p className="container mt-3 text-danger">{error}</p>;
+  if (cargando) return <div className="container mt-4"><p>Cargando productos...</p></div>;
 
   return (
-    <div className="container mt-3">
+    <div className="container mt-4">
       <h2>Listado de Productos</h2>
-      <Table striped bordered hover responsive>
+
+      {error && <Alert variant="danger">{error}</Alert>}
+
+      <Table striped bordered hover responsive className="mt-3">
         <thead>
           <tr>
             <th>ID</th>
@@ -35,14 +46,26 @@ function Productos() {
           </tr>
         </thead>
         <tbody>
-          {productos.map(p => (
-            <tr key={p.id_producto}>
-              <td>{p.id_producto}</td>
-              <td>{p.nomProducto}</td>
-              <td>{p.cantidad}</td>
-              <td>${Number(p.precio).toLocaleString()}</td>
+          {Array.isArray(productos) && productos.length > 0 ? (
+            productos.map(p => {
+              const id = p.id_producto || p.id;
+              const nombre = p.nomProducto || p.nom_producto || p.nombre;
+              const precio = Number(p.precio || 0);
+
+              return (
+                <tr key={id}>
+                  <td>{id}</td>
+                  <td>{nombre}</td>
+                  <td>{p.cantidad ?? p.stock ?? 0}</td>
+                  <td>${precio.toLocaleString('es-CO')}</td>
+                </tr>
+              );
+            })
+          ) : (
+            <tr>
+              <td colSpan="4" className="text-center">No hay productos registrados.</td>
             </tr>
-          ))}
+          )}
         </tbody>
       </Table>
     </div>
