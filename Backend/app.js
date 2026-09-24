@@ -17,14 +17,10 @@ const allowedOrigins = [
 ];
 
 app.use(cors({
-  origin: function (origin, callback) {
-    // Permitir peticiones sin origen (como Postman o Server-to-Server)
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Bloqueado por políticas de CORS'));
-    }
-  },
+  origin: [
+    'http://localhost:5173',
+    'https://proyecto-cffff-1.onrender.com'
+  ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
