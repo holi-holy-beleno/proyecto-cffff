@@ -4,17 +4,18 @@ require('dotenv').config();
 
 const app = express();
 
-// Lista de orígenes permitidos (incluye tu frontend de Render y localhost)
+// 1. Lista de orígenes permitidos
 const allowedOrigins = [
   'https://proyecto-cffff-1.onrender.com',
   'http://localhost:5173',
   'http://localhost:3000'
 ];
 
+// 2. Configuración global de CORS
 app.use(cors({
   origin: function (origin, callback) {
-    // Permitir peticiones sin origen (como Postman o curl) o si está en la lista
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Permitir solicitudes sin origen (curl, Postman, server-to-server) o si están en la lista
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.onrender.com')) {
       callback(null, true);
     } else {
       callback(new Error('No permitido por políticas de CORS'));
@@ -22,29 +23,39 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 200 // Compatibilidad con navegadores antiguos (IE11/SmartTVs)
 }));
 
-// Responder explícitamente a las peticiones Preflight con estado 200/204
-app.options('*', cors());
-
+// Middlewares
 app.use(express.json());
 
-// Importar y registrar rutas
+// 3. Importar rutas
 const clientesRoutes = require('./routes/clientes');
 const productosRoutes = require('./routes/productos');
 const ventasRoutes = require('./routes/ventas');
 
+// 4. Registrar rutas principales con prefijo /api
 app.use('/api/clientes', clientesRoutes);
 app.use('/api/productos', productosRoutes);
 app.use('/api/ventas', ventasRoutes);
 
-// Health check
+// Alias de respaldo por si el frontend consulta sin el prefijo /api
+app.use('/clientes', clientesRoutes);
+app.use('/productos', productosRoutes);
+app.use('/ventas', ventasRoutes);
+
+// Health check para monitoreo y Render
 app.get('/', (req, res) => {
   res.json({ status: 'OK', message: 'API Backend en funcionamiento' });
 });
 
+// Manejo de rutas no encontradas (404)
+app.use((req, res) => {
+  res.status(404).json({ error: 'Ruta no encontrada' });
+});
+
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-  console.log(`Servidor escuchando en el puerto ${PORT}`);
+  console.log(`Servidor backend corriendo en el puerto ${PORT}`);
 });
