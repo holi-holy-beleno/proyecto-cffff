@@ -9,15 +9,15 @@ function Clientes() {
   const [showModal, setShowModal] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Carga de datos segura
+  // Carga de datos
   const cargarClientes = async () => {
     try {
+      // Ajusta a '/api/clientes' si api.js no tiene /api en baseURL
       const res = await api.get('/clientes');
-      // Garantiza que clientes siempre sea un Array
+      
       if (Array.isArray(res.data)) {
         setClientes(res.data);
       } else if (res.data && Array.isArray(res.data.clientes)) {
-        // En caso de que la respuesta venga envuelta como { clientes: [...] }
         setClientes(res.data.clientes);
       } else {
         setClientes([]);
@@ -36,17 +36,31 @@ function Clientes() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const handleOpenModalForCreate = () => {
+    setEditId(null);
+    setForm({ nomCliente: '', contacto: '', departamento: '', ciudad: '' });
+    setErrorMsg('');
+    setShowModal(true);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
+
+    // Payload adaptado por si tu backend mapea nom_cliente en MySQL
+    const payload = {
+      nomCliente: form.nomCliente,
+      nom_cliente: form.nomCliente, // Compatibilidad doble
+      contacto: form.contacto,
+      departamento: form.departamento,
+      ciudad: form.ciudad
+    };
     
     try {
       if (editId) {
-        // ACTUALIZAR
-        await api.put(`/clientes/${editId}`, form);
+        await api.put(`/clientes/${editId}`, payload);
       } else {
-        // AGREGAR
-        await api.post('/clientes', form);
+        await api.post('/clientes', payload);
       }
       await cargarClientes();
       handleClose();
@@ -57,7 +71,6 @@ function Clientes() {
   };
 
   const handleEdit = (cliente) => {
-    // Soporte tanto para id_cliente como para id según la estructura retornada
     const id = cliente.id_cliente || cliente.id;
     setEditId(id);
     setForm({
@@ -94,7 +107,7 @@ function Clientes() {
       
       {errorMsg && <Alert variant="danger" onClose={() => setErrorMsg('')} dismissible>{errorMsg}</Alert>}
 
-      <Button variant="primary" className="mb-3" onClick={() => setShowModal(true)}>
+      <Button variant="primary" className="mb-3" onClick={handleOpenModalForCreate}>
         + Agregar Cliente
       </Button>
 
